@@ -1,0 +1,9 @@
+- ~ make the board ~
+- ~ make the move command ~
+- ~ make the merge command ~
+- ~ assemble beta version ~
+- Add a point counter
+- Add a menu that allows to select the seed and the board size
+- display the seed
+- convert to object oriented
+- make this a game platform, not just a game
