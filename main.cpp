@@ -23,7 +23,7 @@ void showGame()
         for (int j = 0; j < size; j++)
         {
             HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-            SetConsoleTextAttribute(hConsole, 15 - board[i][j]);
+            SetConsoleTextAttribute(hConsole, board[i][j]);
             double result = std::pow(2, board[i][j]) == 1 ? 0 : std::pow(2, board[i][j]);
             if (board[i][j] < 4)
             {
@@ -52,6 +52,7 @@ void addRandomNumber()
 {
     bool done = false;
     bool hasZero = false;
+    srand(time(NULL));
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
