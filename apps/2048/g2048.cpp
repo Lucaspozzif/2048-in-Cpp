@@ -1,4 +1,5 @@
 #include "g2048.h"
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -6,6 +7,7 @@
 #include <cctype>
 #include <cmath>
 #include <windows.h>
+#include <fstream>
 
 void g2048::showGame()
 {
@@ -40,37 +42,46 @@ void g2048::showGame()
     std::cout << std::endl;
 }
 
-void g2048::addRandomNumber()
+std::vector<std::vector<int>> g2048::generateEmptyBoard()
 {
-    bool done = false;
-    bool hasZero = false;
-    srand(time(NULL));
-    for (int i = 0; i < size; i++)
-    {
-        for (int j = 0; j < size; j++)
-        {
-            if (board[i][j] == 0)
-            {
-                hasZero = true;
-            }
-        }
-    }
-    if (!hasZero)
-    {
-        gameOver = true;
-    }
-    while (!done && hasZero)
-    {
-        int randCol = rand() % size;
-        int randRow = rand() % size;
-        int value = rand() % 4 == 0 ? 2 : 1;
+    std::vector<std::vector<int>> board(size, std::vector<int>(size, 0));
+    return board;
+}
 
-        if (board[randCol][randRow] == 0)
-        {
-            board[randCol][randRow] = value;
-            done = true;
-        }
+int g2048::getInput()
+{
+    std::string input;
+    std::cout << "input (wasd ou z para reverter): ";
+    std::getline(std::cin, input);
+
+    std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+
+    int intInput;
+    if (input == "w")
+    {
+        intInput = 0;
     }
+    else if (input == "a")
+    {
+        intInput = 1;
+    }
+    else if (input == "s")
+    {
+        intInput = 2;
+    }
+    else if (input == "d")
+    {
+        intInput = 3;
+    }
+    else if (input == "z")
+    {
+        intInput = 4;
+    }
+    else
+    {
+        intInput = 5;
+    }
+    return intInput;
 }
 
 void g2048::move(int direction)
@@ -246,40 +257,20 @@ void g2048::concat(int direction)
     }
 }
 
-int g2048::getInput()
+bool g2048::hasZero()
 {
-    std::string input;
-    std::cout << "input (wasd ou z para reverter): ";
-    std::getline(std::cin, input);
-
-    std::transform(input.begin(), input.end(), input.begin(), ::tolower);
-
-    int intInput;
-    if (input == "w")
+    bool hasZero = false;
+    for (int i = 0; i < size; i++)
     {
-        intInput = 0;
+        for (int j = 0; j < size; j++)
+        {
+            if (board[i][j] == 0)
+            {
+                hasZero = true;
+            }
+        }
     }
-    else if (input == "a")
-    {
-        intInput = 1;
-    }
-    else if (input == "s")
-    {
-        intInput = 2;
-    }
-    else if (input == "d")
-    {
-        intInput = 3;
-    }
-    else if (input == "z")
-    {
-        intInput = 4;
-    }
-    else
-    {
-        intInput = 5;
-    }
-    return intInput;
+    return hasZero;
 }
 
 int g2048::boardChanged()
@@ -299,20 +290,106 @@ int g2048::boardChanged()
     return boardsAreEqual ? 0 : 1;
 }
 
-std::vector<std::vector<int>> g2048::generateEmptyBoard()
-{
-    std::vector<std::vector<int>> board(size, std::vector<int>(size, 0));
-    return board;
-}
-
 void g2048::revertGame()
 {
     score = previousScore;
     board = previousBoard;
 }
 
+void g2048::addRandomNumber()
+{
+    bool done = false;
+    srand(time(NULL));
+
+    while (!done)
+    {
+        int randCol = rand() % size;
+        int randRow = rand() % size;
+        int value = rand() % 4 == 0 ? 2 : 1;
+
+        if (board[randCol][randRow] == 0)
+        {
+            board[randCol][randRow] = value;
+            done = true;
+        }
+    }
+}
+
+void g2048::loadScores()
+{
+    std::ifstream file("2048-scores");
+    if (file.is_open())
+    {
+        int score;
+        while (file >> score)
+        {
+            scores.push_back(score);
+        }
+        file.close();
+    }
+}
+
+void g2048::saveScores()
+{
+    std::ofstream file("2048-scores");
+    if (file.is_open())
+    {
+        for (const int &score : scores)
+        {
+            file << score << "\n";
+        }
+        file.close();
+    }
+}
+
+void g2048::logScore()
+{
+    scores.push_back(score);
+    std::cout << "Seu Score: " << score << std::endl;
+    saveScores();
+}
+
+void g2048::logScoreHistory()
+{
+    std::cout << "Histórico de Scores:\n";
+    for (const int &score : scores)
+    {
+        std::cout << "[" << score << "]\n";
+    }
+}
+
+void g2048::askDisplayScoreHistory()
+{
+    char response;
+    std::cout << "Quer ver o histórico de Scores? (s/n): ";
+    std::cin >> response;
+
+    if (response == 's' || response == 'S')
+    {
+        logScoreHistory();
+    }
+}
+
+bool g2048::isNumber(const std::string &s)
+{
+    return !s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char c)
+                                      { return !std::isdigit(c); }) == s.end();
+}
+
 void g2048::playGame()
 {
+    bool validSize;
+    std::string stringInput;
+    while (!validSize)
+    {
+        std::cout << "Qual vai ser o tamanho do seu jogo? ";
+        std::getline(std::cin, stringInput);
+        if (isNumber(stringInput))
+        {
+            validSize = true;
+        }
+    }
+    size = stoi(stringInput);
     board = generateEmptyBoard();
 
     addRandomNumber();
@@ -336,14 +413,25 @@ void g2048::playGame()
             move(input);
             concat(input);
             move(input);
+
             if (boardChanged())
                 addRandomNumber();
+            else
+            {
+                if (!hasZero())
+                {
+                    gameOver = true;
+                }
+            }
         }
         std::cout << std::endl;
         std::cout << std::endl;
         std::cout << std::endl;
         showGame();
     }
+    loadScores();
+    logScore();
+    askDisplayScoreHistory();
 }
 
 g2048::g2048() : size(4) {}
